@@ -24,6 +24,8 @@ from logger import TermLogger, AverageMeter
 from trainer import validate, train_net
 from model import LDRN
 
+from datasets.custom_dataset import LapDepth_Dataset
+
 def main_worker(gpu, ngpus_per_node, args):
     args.gpu = gpu
     args.multigpu = False
@@ -60,8 +62,15 @@ def main_worker(gpu, ngpus_per_node, args):
     elif args.dataset == 'NYU':
         args.max_depth = 10.0
 
-    train_set = MyDataset(args, train=True)
-    test_set = MyDataset(args, train=False)
+    '''
+    Use Custome dataset
+    '''
+    #train_set = MyDataset(args, train=True)
+    #test_set = MyDataset(args, train=False)
+
+    train_set = LapDepth_Dataset("/content/nyudepthv2/train")
+    test_set = LapDepth_Dataset("/content/nyudepthv2/val/official", train = False)
+
 
     if (args.rank == 0):
         print("=> Dataset: ",args.dataset)

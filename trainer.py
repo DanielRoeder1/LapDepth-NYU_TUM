@@ -137,6 +137,7 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
     rmse_pdf = "train_rmse.pdf"
     a1_pdf = "train_a1.pdf"        
     
+    '''
     if args.dataset == "KITTI":
         # create mask for gradient loss
         y1_c,y2_c = int(0.40810811 * depth_fixed.size(2)), int(0.99189189 * depth_fixed.size(2))
@@ -150,6 +151,8 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
         crop_mask_a1[:,:,y1_c:y2_c,x1_c:x2_c] = 1
     else:
         crop_mask = None
+    '''
+    crop_mask = None
 
     loss_list = []
     rmse_list = []
@@ -168,7 +171,7 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
     model.train()
     ################################################
     for epoch in tqdm(range(n_epochs+5)):
-        dataset_loader.sampler.set_epoch(epoch)
+        #dataset_loader.sampler.set_epoch(epoch)
         random.seed(epoch)
         np.random.seed(epoch)               # numpy 관련 무작위 고정
         torch.manual_seed(epoch)            # cpu 연산 무작위 고정
@@ -206,7 +209,11 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
             scale_inv_loss = scale_invariant_loss(valid_out, valid_gt_sparse)
             
             ###################################### gradient loss ############################################
-            grad_epoch = 15 if args.dataset == 'KITTI' else 20
+            '''
+            Gradient Loss is only applied after 20 epochs in the case of NYU dataset
+            Reduced start of gradient training to epoch 5 (before 20)
+            '''
+            grad_epoch = 15 if args.dataset == 'KITTI' else 5
             if args.use_dense_depth is True:
                 if epoch < grad_epoch:
                     gradient_loss = torch.tensor(0.).cuda()
@@ -234,14 +241,22 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
             
             if ((i+1) % (iter_per_epoch//2) == 0) and (args.rank == 0):
                 torch.save(model.state_dict(), save_dir+'/epoch_%02d_loss_%.4f_1.pkl' %(model_num+1,loss))
+
+                
+                print("=> Validating half Epoch ....")
+                a1_acc, rmse_test_loss = validate_in_test(args, val_loader, model, logger, args.dataset)
+                print("epoch: %d, [%6d/%6d], Test RMSE: %.5f"%(epoch+1,n_iter, total_iter, rmse_test_loss.item()))
+                validate_plot(args.save_path,a1_acc, a1_acc_list, a1_acc_dir,a1_pdf, train_loss_cnt,True)
+                print(f"Saved Model: {save_dir+'/epoch_%02d_loss_%.4f_1.pkl' %(model_num+1,loss)}")
+
             if ((i+1) % args.print_freq == 0) and (args.rank == 0):
-                print("epoch: %d,  %d/%d"%(epoch+1,i+1,args.epoch_size))
-                print("[%6d/%6d]  total: %.5f, gradient: %.5f, scale_inv: %.5f"%(n_iter, total_iter, loss.item(),gradient_loss.item(),scale_inv_loss.item()))
                 total_loss = loss.item()                    
                 rmse_loss = (torch.sqrt(torch.pow(valid_out.detach()-valid_gt_sparse,2))).mean()
                 rmse_loss = rmse_loss.item()
                 train_loss_cnt = train_loss_cnt + 1
                 train_plot(args.save_path,total_loss, rmse_loss, train_loss_list, train_rmse_list, train_loss_dir,train_loss_dir_rmse,loss_pdf, rmse_pdf, train_loss_cnt,True)
+                print("epoch: %d,  %d/%d"%(epoch+1,i+1,args.epoch_size))
+                print("[%6d/%6d]  total: %.5f, gradient: %.5f, scale_inv: %.5f, RMSE: %.5f"%(n_iter, total_iter, loss.item(),gradient_loss.item(),scale_inv_loss.item(),rmse_loss.item()))
                 
                 if args.val_in_train is True:
                     print("=> validate...")
