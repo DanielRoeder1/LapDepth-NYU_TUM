@@ -94,7 +94,7 @@ def validate_in_test(args, val_loader, model, logger, dataset = 'KITTI'):
         if dataset == 'KITTI':
             err_result = compute_errors(gt_data, output_depth,crop=True, cap=args.cap)
         elif dataset == 'NYU':
-            err_result = compute_errors_NYU(gt_data, output_depth,crop=True)
+            err_result = compute_errors_NYU(gt_data, output_depth,crop=False)
         elif dataset == 'Make3D':
             err_result = compute_errors_Make3D(depth, output_depth)
         errors.update(err_result)
@@ -135,6 +135,7 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
     train_loss_dir = str(train_loss_dir/'train_loss_list.txt')
     loss_pdf = "train_loss.pdf"
     rmse_pdf = "train_rmse.pdf"
+    rmse_test_pdf = "test_rmse.pdf"
     a1_pdf = "train_a1.pdf"        
     
     '''
@@ -161,6 +162,8 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
     a1_acc_list = []
     num_cnt = 0
     train_loss_cnt = 0
+
+    test_rmse_list = []
 
     n_iter = 0
     iter_per_epoch = len(dataset_loader)
@@ -208,7 +211,7 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
             ###################################### scale invariant loss #####################################
             scale_inv_loss = scale_invariant_loss(valid_out, valid_gt_sparse)
             
-            ###################################### gradient loss ############################################
+            ###################################### gradient loss ####################validate_plot########################
             '''
             Gradient Loss is only applied after 20 epochs in the case of NYU dataset
             Reduced start of gradient training to epoch 5 (before 20)
@@ -245,8 +248,11 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
                 
                 print("=> Validating half Epoch ....")
                 a1_acc, rmse_test_loss = validate_in_test(args, val_loader, model, logger, args.dataset)
+                
                 print("epoch: %d, [%6d/%6d], Test RMSE: %.5f"%(epoch+1,n_iter, total_iter, rmse_test_loss.item()))
                 validate_plot(args.save_path,a1_acc, a1_acc_list, a1_acc_dir,a1_pdf, train_loss_cnt,True)
+                test_rmse_list.append(rmse_test_loss)
+                plot_loss(test_rmse_list, args.save_path, train_loss_cnt, rmse_test_pdf)
                 print(f"Saved Model: {save_dir+'/epoch_%02d_loss_%.4f_1.pkl' %(model_num+1,loss)}")
 
             if ((i+1) % args.print_freq == 0) and (args.rank == 0):
@@ -255,8 +261,7 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
                 rmse_loss = rmse_loss.item()
                 train_loss_cnt = train_loss_cnt + 1
                 train_plot(args.save_path,total_loss, rmse_loss, train_loss_list, train_rmse_list, train_loss_dir,train_loss_dir_rmse,loss_pdf, rmse_pdf, train_loss_cnt,True)
-                print("epoch: %d,  %d/%d"%(epoch+1,i+1,args.epoch_size))
-                print("[%6d/%6d]  total: %.5f, gradient: %.5f, scale_inv: %.5f, RMSE: %.5f"%(n_iter, total_iter, loss.item(),gradient_loss.item(),scale_inv_loss.item(),rmse_loss.item()))
+                print("epoch: %d, [%d/%d]  total: %.5f, gradient: %.5f, scale_inv: %.5f, RMSE: %.5f"%(epoch+1, i+1,args.epoch_size, loss.item(),gradient_loss.item(),scale_inv_loss.item(),rmse_loss.item()))
                 
                 if args.val_in_train is True:
                     print("=> validate...")
