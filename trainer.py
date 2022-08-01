@@ -261,7 +261,7 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
                 rmse_loss = rmse_loss.item()
                 train_loss_cnt = train_loss_cnt + 1
                 train_plot(args.save_path,total_loss, rmse_loss, train_loss_list, train_rmse_list, train_loss_dir,train_loss_dir_rmse,loss_pdf, rmse_pdf, train_loss_cnt,True)
-                print("epoch: %d, [%d/%d]  total: %.5f, gradient: %.5f, scale_inv: %.5f, RMSE: %.5f"%(epoch+1, i+1,args.epoch_size, loss.item(),gradient_loss.item(),scale_inv_loss.item(),rmse_loss.item()))
+                print("epoch: %d, [%d/%d]  total: %.5f, gradient: %.5f, scale_inv: %.5f, RMSE: %.5f"%(epoch+1, i+1,args.epoch_size, loss.item(),gradient_loss.item(),scale_inv_loss.item(),rmse_loss))
                 
                 if args.val_in_train is True:
                     print("=> validate...")

@@ -152,8 +152,8 @@ def main_worker(gpu, ngpus_per_node, args):
 
 
     ############################## optimizer and criterion setting ##############################
-    optimizer = torch.optim.AdamW([{'params': Model.module.encoder.parameters(), 'weight_decay': args.weight_decay, 'lr': args.lr},
-                                   {'params': Model.module.decoder.parameters(), 'weight_decay': 0, 'lr': args.lr}], eps=args.adam_eps)
+    optimizer = torch.optim.AdamW([{'params': Model.encoder.parameters(), 'weight_decay': args.weight_decay, 'lr': args.lr},
+                                   {'params': Model.decoder.parameters(), 'weight_decay': 0, 'lr': args.lr}], eps=args.adam_eps)
     ##############################################################################################
     logger = None
 
