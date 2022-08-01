@@ -57,6 +57,9 @@ def compute_errors(gt_sparse, pred, crop=True, cap=80.0):
 
     return [metric.item() / batch_size for metric in [abs_diff, abs_rel, sq_rel, a1, a2, a3,rmse_tot,rmse_log_tot]]
 
+'''
+Removed cropping to let validation behave like training
+'''
 def compute_errors_NYU(gt, pred, crop=True):
     abs_diff, abs_rel, log10, a1, a2, a3,rmse_tot,rmse_log_tot = 0,0,0,0,0,0,0,0
     batch_size = gt.size(0)
@@ -68,10 +71,10 @@ def compute_errors_NYU(gt, pred, crop=True):
     for sparse_gt, pred in zip(gt, pred):
         sparse_gt = sparse_gt[0,:,:]
         pred = pred[0,:,:]
-        h,w = sparse_gt.shape
-        pred_uncropped = torch.zeros((h, w), dtype=torch.float32).cuda()
-        pred_uncropped[42:474, 40:616] = pred
-        pred = pred_uncropped
+        #h,w = sparse_gt.shape
+        #pred_uncropped = torch.zeros((h, w), dtype=torch.float32).cuda()
+        #pred_uncropped[42:474, 40:616] = pred
+        #pred = pred_uncropped
 
         valid = (sparse_gt < 10)&(sparse_gt > 1e-3)
         if crop:
