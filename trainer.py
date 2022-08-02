@@ -114,8 +114,10 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
     data_iter = iter(dataset_loader)
     rgb_fixed, depth_fixed, _ = next(data_iter)
     depth_fixed = depth_fixed.cuda()
+
+    drive_save_path = "/content/drive/MyDrive/Internship/DepthPrediction/models/LapDepth"
+    save_dir = drive_save_path +'/' + args.dataset + '_LDRN_' + args.encoder + '_epoch' + str(n_epochs+5)
     
-    save_dir = './' + args.dataset + '_LDRN_' + args.encoder + '_epoch' + str(n_epochs+5)
     
     if (args.rank == 0):
         print("Training for %d epochs..." % (n_epochs+5))
@@ -230,8 +232,8 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
             loss = scale_inv_loss + gradient_loss
 
             # zero the parameter gradients and backward & optimize
-            optimizer.zero_grad()
-            loss.backward()
+            accumulated_loss = loss / args.accumulation_steps
+            accumulated_loss.backward()
 
             if n_iter == total_iter:
                 current_lr = end_lr
@@ -239,9 +241,13 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
                 current_lr = (base_lr - end_lr) * (1 - n_iter / total_iter) ** 0.5 + end_lr
                 n_iter += 1
 
-            optimizer.param_groups[0]['lr'] = current_lr
-            optimizer.param_groups[1]['lr'] = current_lr
-            optimizer.step()
+
+            if ((i + 1) % args.accumulation_steps == 0) or (i + 1 == len(dataset_loader)):
+                optimizer.param_groups[0]['lr'] = current_lr
+                optimizer.param_groups[1]['lr'] = current_lr
+                optimizer.step()
+                # zero the parameter gradients and backward & optimize
+                optimizer.zero_grad()
             
             if ((i+1) % (iter_per_epoch//2) == 0) and (args.rank == 0):
                 print("=> Validating half Epoch ....")
