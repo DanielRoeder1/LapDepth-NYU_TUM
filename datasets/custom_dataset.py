@@ -3,7 +3,7 @@ import os
 import h5py
 import numpy as np
 from PIL import Image
-from transform_list import RandomCropNumpy,EnhancedCompose,RandomColor,RandomHorizontalFlip,ArrayToTensorNumpy,Normalize
+from transform_list import RandomCropNumpy,EnhancedCompose,RandomColor,RandomHorizontalFlip,ArrayToTensorNumpy,Normalize,CenterCrop
 from torchvision import transforms
 
 class Transformer(object):
@@ -16,6 +16,7 @@ class Transformer(object):
           [transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), None]
       ])
       self.test_transform = EnhancedCompose([
+          CenterCrop(crop_dim),
           ArrayToTensorNumpy(),
           [transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), None]
       ])
