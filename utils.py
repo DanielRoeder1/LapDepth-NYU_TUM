@@ -80,7 +80,10 @@ def save_depth_tensor(tensor_img,img_dir,filename):
     imageio.imwrite(img_dir + '/' + filename,result)
 
 def plot_loss(data, apath, epoch,train,filename):
-    axis = np.linspace(1, epoch, epoch)
+    if type(epoch) != list:
+      axis = np.linspace(1, epoch, epoch)
+    else:
+      axis = epoch
     
     label = 'Total Loss'
     fig = plt.figure()

@@ -164,6 +164,7 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
     train_loss_cnt = 0
 
     test_rmse_list = []
+    test_rmse_iterations = []
 
     n_iter = 0
     iter_per_epoch = len(dataset_loader)
@@ -243,17 +244,18 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
             optimizer.step()
             
             if ((i+1) % (iter_per_epoch//2) == 0) and (args.rank == 0):
-                torch.save(model.state_dict(), save_dir+'/epoch_%02d_loss_%.4f_1.pkl' %(model_num+1,loss))
-
-                
                 print("=> Validating half Epoch ....")
                 a1_acc, rmse_test_loss = validate_in_test(args, val_loader, model, logger, args.dataset)
                 
-                print("epoch: %d, [%6d/%6d], Test RMSE: %.5f"%(epoch+1,n_iter, total_iter, rmse_test_loss.item()))
-                validate_plot(args.save_path,a1_acc, a1_acc_list, a1_acc_dir,a1_pdf, train_loss_cnt,True)
+                print("epoch: %d, [%6d/%6d], Test RMSE: %.5f"%(epoch+1,n_iter, total_iter, rmse_test_loss))
+                
                 test_rmse_list.append(rmse_test_loss)
-                plot_loss(test_rmse_list, args.save_path, train_loss_cnt, rmse_test_pdf)
-                print(f"Saved Model: {save_dir+'/epoch_%02d_loss_%.4f_1.pkl' %(model_num+1,loss)}")
+                test_rmse_iterations.append(n_iter)
+                plot_loss(test_rmse_list, args.save_path, test_rmse_iterations, True,rmse_test_pdf)
+                validate_plot(args.save_path,a1_acc, a1_acc_list, a1_acc_dir,a1_pdf, test_rmse_iterations,True)
+                
+                torch.save(model.state_dict(), save_dir+'/epoch_%02d_loss_%.4f_rmse_%.4f_1.pkl' %(model_num+1,loss, rmse_test_loss))
+                print(f"Saved Model: {save_dir+'/epoch_%02d_loss_%.4f_rmse_%.4f_1.pkl' %(model_num+1,loss, rmse_test_loss)}")
 
             if ((i+1) % args.print_freq == 0) and (args.rank == 0):
                 total_loss = loss.item()                    
