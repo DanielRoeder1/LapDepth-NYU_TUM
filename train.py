@@ -145,15 +145,18 @@ def main_worker(gpu, ngpus_per_node, args):
     ################################ pretrained model loading #################################
     if args.model_dir != '':
         #Model.load_state_dict(torch.load(args.model_dir,map_location='cuda:'+args.gpu_num))
+        Model = torch.nn.DataParallel(Model)
         Model.load_state_dict(torch.load(args.model_dir))
+        encoder_params = Model.module.encoder.parameters()
+        decoder_params = Model.module.decoder.parameters()
         if (args.rank == 0):
             print('=> pretrained model is created')
     #############################################################################################
 
 
     ############################## optimizer and criterion setting ##############################
-    optimizer = torch.optim.AdamW([{'params': Model.encoder.parameters(), 'weight_decay': args.weight_decay, 'lr': args.lr},
-                                   {'params': Model.decoder.parameters(), 'weight_decay': 0, 'lr': args.lr}], eps=args.adam_eps)
+    optimizer = torch.optim.AdamW([{'params': encoder_params, 'weight_decay': args.weight_decay, 'lr': args.lr},
+                                   {'params': decoder_params, 'weight_decay': 0, 'lr': args.lr}], eps=args.adam_eps)
     ##############################################################################################
     logger = None
 

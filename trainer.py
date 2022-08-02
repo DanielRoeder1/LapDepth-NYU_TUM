@@ -115,6 +115,9 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
     rgb_fixed, depth_fixed, _ = next(data_iter)
     depth_fixed = depth_fixed.cuda()
 
+    '''
+    Enter Gdrive path here
+    '''
     drive_save_path = "/content/drive/MyDrive/Internship/DepthPrediction/models/LapDepth"
     save_dir = drive_save_path +'/' + args.dataset + '_LDRN_' + args.encoder + '_epoch' + str(n_epochs+5)
     
