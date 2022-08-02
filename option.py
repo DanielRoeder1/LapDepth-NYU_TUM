@@ -46,6 +46,7 @@ parser.add_argument('--width', type=int, default = 704)
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true', help='evaluate model on validation set')
 parser.add_argument('--lv6', action='store_true', help='use lv6 Laplacian decoder')
 parser.add_argument('--accumulation_steps', type= int, default=4)
+parser.add_argument('--gradient_loss_epoch', type= int, default = 20)
 
 # GPU parallel process setting
 parser.add_argument('--gpu_num', type=str, default = "0,1,2,3", help='force available gpu index')

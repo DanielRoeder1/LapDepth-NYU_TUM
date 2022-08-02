@@ -222,7 +222,7 @@ def train_net(args,model, optimizer, dataset_loader,val_loader, n_epochs,logger)
             Gradient Loss is only applied after 20 epochs in the case of NYU dataset
             Reduced start of gradient training to epoch 5 (before 20)
             '''
-            grad_epoch = 15 if args.dataset == 'KITTI' else 5
+            grad_epoch = 15 if args.dataset == 'KITTI' else args.gradient_loss_epoch
             if args.use_dense_depth is True:
                 if epoch < grad_epoch:
                     gradient_loss = torch.tensor(0.).cuda()
